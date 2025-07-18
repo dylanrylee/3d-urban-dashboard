@@ -12,7 +12,6 @@ function CityScene({ buildings }) {
     return null;
   }
 
-  // Log position ranges
   const positions = buildings.map(building => {
     const { geometry } = building;
     if (geometry?.coordinates) {
@@ -28,9 +27,6 @@ function CityScene({ buildings }) {
 
   return (
     <group>
-      <Box position={[0, 5, 0]} args={[10, 10, 10]}>
-        <meshStandardMaterial color="yellow" />
-      </Box>
       {buildings.map(building => {
         const { id = Math.random(), geometry, height = 10, width = 10, length = 10, zoning = 'gray' } = building;
 

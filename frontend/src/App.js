@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Canvas, extend } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import * as THREE from 'three'; // Import three for AxesHelper
+import { FirstPersonControls } from '@react-three/drei';
+import * as THREE from 'three';
 import CityScene from './components/CityScene';
 import './App.css';
 
-// Extend AxesHelper to make it usable in React Three Fiber
 extend({ AxesHelper: THREE.AxesHelper });
 
 function App() {
@@ -38,6 +37,7 @@ function App() {
         }
         return true;
       });
+      console.log('Queried buildings:', filtered);
       setBuildings(filtered);
     } catch (error) {
       console.error('Error querying:', error);
@@ -72,6 +72,7 @@ function App() {
       const response = await axios.get(`http://localhost:5000/api/project/${projectId}`);
       const filterIds = response.data.filters;
       const filtered = buildings.filter(b => filterIds.includes(b.id));
+      console.log('Loaded project buildings:', filtered);
       setBuildings(filtered);
       setSelectedProject(projectId);
     } catch (error) {
@@ -104,16 +105,20 @@ function App() {
           ))}
         </select>
       </div>
-      <Canvas camera={{ position: [-20, 50, 50], fov: 45, near: 0.1, far: 10000 }}>
+      <Canvas camera={{ position: [0, 10, 100], fov: 45, near: 0.1, far: 20000 }}>
         <ambientLight intensity={1.0} />
         <directionalLight position={[100, 100, 100]} intensity={1.5} />
         <mesh position={[0, -0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[5000, 5000]} />
+          <planeGeometry args={[10000, 10000]} />
           <meshStandardMaterial color="green" />
         </mesh>
-        <primitive object={new THREE.AxesHelper(100)} /> {/* Use primitive for AxesHelper */}
+        <primitive object={new THREE.AxesHelper(100)} />
         <CityScene buildings={buildings} />
-        <OrbitControls />
+        <FirstPersonControls
+          movementSpeed={200}
+          lookSpeed={0.1}
+          lookVertical={true}
+        />
       </Canvas>
     </div>
   );
