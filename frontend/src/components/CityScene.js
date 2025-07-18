@@ -4,25 +4,43 @@ import * as THREE from 'three';
 
 function CityScene({ buildings }) {
   const texture = useMemo(() => new THREE.TextureLoader().load('https://via.placeholder.com/100x100.png?text=Brick'), []);
+  const referencePoint = [-73.85, 40.86]; // Matches your data
+
+  if (!buildings || !Array.isArray(buildings)) {
+    console.error('Invalid buildings data:', buildings);
+    return null;
+  }
 
   return (
     <group>
+      <Box position={[0, 5, 0]} args={[10, 10, 10]}>
+        <meshStandardMaterial color="yellow" />
+      </Box>
       {buildings.map(building => {
-        const { id, geometry, height, width = 20, length = 25, zoning } = building;
-        if (geometry.type !== 'Point') {
-          console.error(`Invalid geometry for building ${id}:`, geometry);
+        const { id = Math.random(), geometry, height = 10, width = 10, length = 10, zoning = 'gray' } = building;
+
+        if (!geometry?.coordinates || height <= 0) {
+          console.error(`Missing or invalid data for building ${id}:`, building);
           return null;
         }
-        const [x, z] = geometry.coordinates;
-        const y = 0; // Base of cube at ground level, height extends upward
-        const color = zoning === 'R6' ? 'red' : zoning === 'C4-4A' ? 'blue' : 'gray';
+        if (geometry.type !== 'Point') {
+          console.error(`Invalid geometry for building ${id}: type is ${geometry.type}`, geometry);
+          return null;
+        }
+
+        const [lon, lat] = geometry.coordinates;
+        const x = (lon - referencePoint[0]) * 10000; // Increased to 10000
+        const z = (lat - referencePoint[1]) * 10000;
+        const y = height / 2;
+        console.log(`Building ${id} position: [${x}, ${y}, ${z}], dimensions: [${width}, ${height}, ${length}]`);
+        const color = zoning === 'R6' ? 'red' : zoning === 'C4-4A' ? 'blue' : zoning === 'Residential' ? 'orange' : 'gray';
         return (
           <Box
             key={id}
             position={[x, y, z]}
-            args={[width / 10000, height, length / 10000]} // Adjusted scale
+            args={[Math.max(width, 5), Math.max(height, 5), Math.max(length, 5)]}
           >
-            <meshStandardMaterial map={texture} color={color} />
+            <meshStandardMaterial color={color} />
           </Box>
         );
       })}

@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, extend } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import * as THREE from 'three'; // Import three for AxesHelper
 import CityScene from './components/CityScene';
 import './App.css';
+
+// Extend AxesHelper to make it usable in React Three Fiber
+extend({ AxesHelper: THREE.AxesHelper });
 
 function App() {
   const [buildings, setBuildings] = useState([]);
@@ -16,6 +20,7 @@ function App() {
   useEffect(() => {
     axios.get('http://localhost:5000/api/buildings')
       .then(response => {
+        console.log('Buildings data:', response.data);
         setBuildings(response.data);
       })
       .catch(error => {
@@ -99,13 +104,14 @@ function App() {
           ))}
         </select>
       </div>
-      <Canvas camera={{ position: [-73.85, 50, 40.86], fov: 60, near: 0.1, far: 2000 }}>
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} />
-        <mesh position={[-73.85, 0, 40.86]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[1, 1]} /> {/* Larger ground plane */}
+      <Canvas camera={{ position: [-20, 50, 50], fov: 45, near: 0.1, far: 10000 }}>
+        <ambientLight intensity={1.0} />
+        <directionalLight position={[100, 100, 100]} intensity={1.5} />
+        <mesh position={[0, -0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[5000, 5000]} />
           <meshStandardMaterial color="green" />
         </mesh>
+        <primitive object={new THREE.AxesHelper(100)} /> {/* Use primitive for AxesHelper */}
         <CityScene buildings={buildings} />
         <OrbitControls />
       </Canvas>
