@@ -1,3 +1,4 @@
+// src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Canvas, extend } from '@react-three/fiber';
@@ -10,20 +11,22 @@ import './App.css';
 
 extend({ AxesHelper: THREE.AxesHelper });
 
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+
 function App() {
-  const [allBuildings,    setAllBuildings]    = useState([]);
-  const [displayed,       setDisplayed]       = useState([]);
-  const [query,           setQuery]           = useState('');
+  const [allBuildings,     setAllBuildings]     = useState([]);
+  const [displayed,        setDisplayed]        = useState([]);
+  const [query,            setQuery]            = useState('');
 
-  const [username,        setUsername]        = useState('');
-  const [projectName,     setProjectName]     = useState('');
-  const [projects,        setProjects]        = useState([]);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [selectedBuilding,setSelectedBuilding]= useState(null);
+  const [username,         setUsername]         = useState('');
+  const [projectName,      setProjectName]      = useState('');
+  const [projects,         setProjects]         = useState([]);
+  const [selectedProject,  setSelectedProject]  = useState(null);
+  const [selectedBuilding, setSelectedBuilding] = useState(null);
 
-  // Load all buildings once
+  // 1) Fetch all buildings
   useEffect(() => {
-    axios.get('http://localhost:5000/api/buildings')
+    axios.get(`${API_BASE}/api/buildings`)
       .then(res => {
         setAllBuildings(res.data);
         setDisplayed(res.data);
@@ -31,23 +34,26 @@ function App() {
       .catch(console.error);
   }, []);
 
-  // Reload saved projects when username changes
+  // 2) Reload projects when username changes
   useEffect(() => {
     if (!username.trim()) {
       setProjects([]);
       setSelectedProject(null);
       return;
     }
-    axios.get(`http://localhost:5000/api/projects/${username}`)
+    axios.get(`${API_BASE}/api/projects/${username}`)
       .then(res => setProjects(res.data))
       .catch(console.error);
   }, [username]);
 
-  // Run the LLM query (backend filters & returns matches)
+  // 3) Run natural-language query
   const handleQuery = async () => {
     if (!query.trim()) return;
     try {
-      const res = await axios.post('http://localhost:5000/api/query', { query });
+      const res = await axios.post(
+        `${API_BASE}/api/query`,
+        { query }
+      );
       if (res.data.error) {
         alert(res.data.error);
         return;
@@ -60,26 +66,29 @@ function App() {
     }
   };
 
-  // Reset view
+  // 4) Reset view
   const handleReset = () => {
     setDisplayed(allBuildings);
     setQuery('');
     setSelectedProject(null);
   };
 
-  // Save current displayed as project
+  // 5) Save current view as a project
   const saveProject = async () => {
     if (!username.trim() || !projectName.trim()) {
       alert('Enter username & project name');
       return;
     }
     try {
-      await axios.post('http://localhost:5000/api/projects', {
-        username,
-        projectName,
-        filters: displayed.map(b => b.id),
-      });
-      const res = await axios.get(`http://localhost:5000/api/projects/${username}`);
+      await axios.post(
+        `${API_BASE}/api/projects`,
+        {
+          username,
+          projectName,
+          filters: displayed.map(b => b.id),
+        }
+      );
+      const res = await axios.get(`${API_BASE}/api/projects/${username}`);
       setProjects(res.data);
       alert('Project saved!');
     } catch (err) {
@@ -88,11 +97,11 @@ function App() {
     }
   };
 
-  // Load a project
+  // 6) Load a saved project
   const loadProject = async (projId) => {
     if (!projId) return;
     try {
-      const res = await axios.get(`http://localhost:5000/api/project/${projId}`);
+      const res = await axios.get(`${API_BASE}/api/project/${projId}`);
       const ids = res.data.filters;
       setDisplayed(allBuildings.filter(b => ids.includes(b.id)));
       setSelectedProject(projId);
@@ -102,13 +111,13 @@ function App() {
     }
   };
 
-  // Delete selected project
+  // 7) Delete the selected project
   const deleteProject = async () => {
     if (!selectedProject) return;
     if (!window.confirm('Delete this project?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/project/${selectedProject}`);
-      const res = await axios.get(`http://localhost:5000/api/projects/${username}`);
+      await axios.delete(`${API_BASE}/api/project/${selectedProject}`);
+      const res = await axios.get(`${API_BASE}/api/projects/${username}`);
       setProjects(res.data);
       handleReset();
       alert('Project deleted');
@@ -135,7 +144,6 @@ function App() {
       {/* Inline, horizontal instructions */}
       <ul className="instructions">
         <li><strong>WASD</strong> to move</li>
-        <li><strong>RF</strong> to go up or down</li>
         <li><strong>Mouse</strong> to look</li>
         <li><strong>Click</strong> building for details</li>
         <li><strong>Run Query</strong> to filter</li>
@@ -179,18 +187,21 @@ function App() {
 
       {/* 3D View */}
       <div className="scene-container">
-        <Canvas className="Canvas" camera={{ position: [0,10,100], fov:45, near:0.1, far:20000 }}>
-          <ambientLight intensity={1.0}/>
-          <directionalLight position={[100,100,100]} intensity={1.5}/>
+        <Canvas
+          className="Canvas"
+          camera={{ position: [0, 10, 100], fov: 45, near: 0.1, far: 20000 }}
+        >
+          <ambientLight intensity={1.0} />
+          <directionalLight position={[100, 100, 100]} intensity={1.5} />
 
-          <mesh position={[0,-0.1,0]} rotation={[-Math.PI/2,0,0]}>
-            <planeGeometry args={[10000,10000]}/>
-            <meshStandardMaterial color="green"/>
+          <mesh position={[0, -0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[10000, 10000]} />
+            <meshStandardMaterial color="green" />
           </mesh>
 
-          <primitive object={new THREE.AxesHelper(100)}/>
-          <CityScene buildings={displayed} onSelectBuilding={setSelectedBuilding}/>
-          <FirstPersonControls movementSpeed={200} lookSpeed={0.1} lookVertical/>
+          <primitive object={new THREE.AxesHelper(100)} />
+          <CityScene buildings={displayed} onSelectBuilding={setSelectedBuilding} />
+          <FirstPersonControls movementSpeed={200} lookSpeed={0.1} lookVertical />
         </Canvas>
 
         {selectedBuilding && (
