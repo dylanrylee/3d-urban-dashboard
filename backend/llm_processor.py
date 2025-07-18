@@ -1,24 +1,50 @@
-import requests
-import json
-from os import environ
+# llm_processor.py (updated parsing)
+from dotenv import load_dotenv
+load_dotenv()
 
-HUGGINGFACE_API_KEY = environ.get('HUGGINGFACE_API_KEY')
+import os, requests, json
+import google.generativeai as genai
+
+API_KEY    = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=API_KEY)
+
+PRIMARY_MODEL  = "gemini-1.5-flash"
+
+def _call_hf(model, prompt):
+    resp = genai.GenerativeModel(model).generate_content(prompt)
+    text = resp.text
+    print(f"[LLM:{model}] raw output:\n{text}")
+    return text
 
 def process_query(query):
-    headers = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
-    payload = {
-        "inputs": f"Extract the filter from this query: '{query}'. Return a JSON object with 'attribute' (e.g., height), 'operator' (e.g., >), and 'value' (e.g., 100).",
-        "parameters": {"max_new_tokens": 100}
-    }
-    response = requests.post(
-        "https://api-inference.huggingface.co/models/mixtral-8x7b-instruct-v0.1",
-        headers=headers,
-        json=payload
+    if not API_KEY:
+        return {"error": "Missing GEMINI_API_KEY"}
+
+    prompt = (
+      "Output ONLY a JSON object with keys:\n"
+      "  attribute: one of height, zoning, value, etc.\n"
+      "  operator: >, <, >=, <=, or ==\n"
+      "  value: a number or string\n"
+      f"For this query: \"{query}\""
     )
-    if response.status_code == 200:
-        result = response.json()[0]['generated_text']
-        try:
-            return json.loads(result.split('```json\n')[1].split('\n```')[0])
-        except:
-            return {"error": "Failed to parse LLM response"}
-    return {"error": "LLM API request failed"}
+
+    text = _call_hf(PRIMARY_MODEL, prompt)
+
+    # 1) Strip fenced code blocks:
+    #    Remove ```json\n at the start and trailing ``` if present
+    body = text.strip()
+    if body.startswith("```"):
+        # remove leading ```json or ```
+        body = body.lstrip("`")                          # drop backticks
+        body = body.replace("json", "", 1).lstrip()      # drop optional 'json'
+        # remove trailing backticks
+        if body.endswith("```"):
+            body = body[:-3].strip()
+
+    # 2) Now parse JSON
+    try:
+        criteria = json.loads(body)
+        return criteria
+    except Exception as e:
+        print("[LLM] JSON parse error:", e, "\n--body was--\n", repr(body))
+        return {"error": "Failed to parse LLM response", "raw": body}
