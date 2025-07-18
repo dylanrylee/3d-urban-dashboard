@@ -5,7 +5,7 @@ def fetch_calgary_data():
     Fetch building data from NYC Open Data Building Footprints API (u9wf-3gbt).
     Returns a list of buildings with id, geometry, height, address, zoning, value, area, width, length.
     """
-    url = "https://data.cityofnewyork.us/resource/u9wf-3gbt.geojson?$limit=100"
+    url = "https://data.cityofnewyork.us/resource/u9wf-3gbt.geojson?$limit=200"
     try:
         response = requests.get(url)
         response.raise_for_status()

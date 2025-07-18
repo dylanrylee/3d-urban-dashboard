@@ -8,7 +8,7 @@ export default function QueryInput({ query, setQuery, onSubmit }) {
         type="text"
         value={query}
         onChange={e => setQuery(e.target.value)}
-        placeholder="e.g., highlight buildings over 100 ft"
+        placeholder="e.g., buildings over 100 ft"
       />
       <button onClick={onSubmit}>Run Query</button>
     </div>

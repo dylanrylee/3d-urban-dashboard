@@ -1,48 +1,113 @@
+/* src/App.css */
+
+/* 1) Base reset & scrolling */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;         /* we’ll handle scroll inside .App */
+}
+body {
+  overflow: hidden;
+}
+
+/* 2) Main container fills viewport and scrolls internally if needed */
 .App {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   max-width: 1200px;
-  margin: 20px auto;
-  padding: 20px;
+  margin: 0 auto;
   border: 2px solid #333;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  overflow: hidden;        /* prevent children from spilling out */
 }
 
-.controls {
-  margin: 20px;
+/* 3) Top controls all have fixed height, no overflow */
+.query-controls,
+.project-controls,
+.instructions {
+  flex: 0 0 auto;
+  padding: 10px 20px;
+  background: #fafafa;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Query Controls */
+.query-controls {
   display: flex;
   gap: 10px;
+  justify-content: center;
+}
+.query-controls button {
+  padding: 8px 12px;
+  font-size: 16px;
 }
 
-.controls input, .controls select, .controls button {
+/* Instructions inline */
+.instructions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.instructions li {
+  margin: 0 1rem;
+  font-size: 0.9rem;
+}
+.instructions li:not(:last-child)::after {
+  content: "•";
+  margin-left: 1rem;
+  color: #888;
+}
+
+/* Project management */
+.project-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.project-controls input,
+.project-controls select,
+.project-controls button {
   padding: 8px;
   font-size: 16px;
 }
 
+/* 4) 3D scene fills remaining space */
+.scene-container {
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Make the Canvas fill that space */
 .Canvas {
   width: 100%;
-  height: 80vh;
-}
-
-.scene-container {
-  width: 100%;
   height: 100%;
-  position: relative;
+  display: block;
 }
 
+/* 5) Details panel fixed in viewport */
 .details-panel {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 10;
-  background: rgba(255, 255, 255, 0.95);
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: rgba(255,255,255,0.97);
   padding: 1rem;
   border-radius: 4px;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
-  max-width: 200px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+  max-width: 240px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 }
 
-/* add to App.css (or your main CSS) */
+/* 6) QueryInput inner styling */
 .query-input {
   display: flex;
   gap: 0.5rem;
