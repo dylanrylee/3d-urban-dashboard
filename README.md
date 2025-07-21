@@ -7,7 +7,10 @@ An interactive 3D city‑block viewer for Calgary (or NYC by default) that lets 
 - Extrude & render them in Three.js  
 - Click to highlight & show details  
 - Run natural‑language filters powered by Google Gemini (or HF LLM)  
-- Save/load/delete “projects” (filter‑sets) in SQLite  
+- Save/load/delete “projects” (filter‑sets) in SQLite
+
+### Demo it yourself here
+https://3d-urban-dashboard.netlify.app/
 
 ---
 
